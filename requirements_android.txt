@@ -1,7 +1,7 @@
 flet==0.28.3
 Pillow
 numpy
-tflite-runtime; sys_platform == 'linux'
-# Note: tflite-runtime is platform specific. Flet generic build usually handles it via p4a recipes if specified.
-# For simplicity in GitHub Actions, we often rely on standard packages or specific wheels.
-# But for now, we list it. If standard build fails, we might need just 'flet' and allow flet to manage python.
+ai-edge-litert; sys_platform == 'linux'
+# Notes: 
+# - ai-edge-litert is the modern replacement for tflite-runtime.
+# - We include it conditionally for Linux (Android build env) to avoid issues on Windows dev machine if not available.

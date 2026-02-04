@@ -36,14 +36,20 @@ except Exception:
     np = None
     Interpreter = None
 
-# Try tflite_runtime if TF not available
+# Try tflite_runtime or ai-edge-litert if TF not available
 if not _HAS_TF:
+    # Try modern ai-edge-litert first
     try:
-        import tflite_runtime.interpreter as tflite
-        Interpreter = tflite.Interpreter
-        import numpy as np  # Usually commonly available or needed
+        from ai_edge_litert.interpreter import Interpreter
+        import numpy as np
     except ImportError:
-        pass
+        # Fallback to legacy tflite-runtime
+        try:
+            import tflite_runtime.interpreter as tflite
+            Interpreter = tflite.Interpreter
+            import numpy as np
+        except ImportError:
+            pass
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
