@@ -95,7 +95,7 @@ class MangoApp:
         logger.info("FilePicker disabled; using native dialog fallback")
 
         # dynamic model selector (filled later)
-        self.model_selector = ft.Dropdown(width=220)
+        self.model_selector = ft.Dropdown()
 
         # set theme and colors
         self.is_dark = self.page.theme_mode == ft.ThemeMode.DARK
@@ -330,13 +330,23 @@ class MangoApp:
         # history container reference (Column for internal list, so page scrolls naturally)
         self.history_container = ft.Column(spacing=8)
 
-        model_row = ft.Row([ft.Text("Modelo:", color=self.text_color), self.model_selector, ft.IconButton(icon=Icons.REFRESH, on_click=self.reload_models, tooltip='Recargar modelos')], spacing=8, vertical_alignment=ft.CrossAxisAlignment.CENTER)
+        model_row = ft.Row([
+            ft.Text("Modelo:", color=self.text_color),
+            ft.Container(self.model_selector, expand=True),
+            ft.IconButton(icon=Icons.REFRESH, on_click=self.reload_models, tooltip='Recargar modelos')
+        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+
+        actions_row = ft.Row([
+            ft.ElevatedButton("Seleccionar foto", icon=Icons.UPLOAD_FILE, on_click=self.open_file_picker, bgcolor=self.primary, color=Colors.WHITE, expand=True),
+            ft.ElevatedButton("Usar cámara", icon=Icons.PHOTO_CAMERA, on_click=self.open_file_picker, expand=True)
+        ], spacing=12)
 
         controls = ft.Column([
             header,
             load_error_notice,
             self.picker_status,
-            ft.Row([model_row, upload_btn, camera_btn], spacing=12, alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            model_row,
+            actions_row,
             self.result_card,
             ft.Divider(),
             ft.Text("Historial de análisis", size=16, weight=ft.FontWeight.BOLD, color=self.text_color),

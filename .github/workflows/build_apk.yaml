@@ -12,7 +12,19 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
+
+    - name: Setup Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+        channel: 'stable'
 
     - name: Setup Python
       uses: actions/setup-python@v4
@@ -22,16 +34,15 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements_android.txt
+        # Install flet (CLI tools)
+        pip install flet
 
     - name: Flet Build APK
-      uses: flet-dev/flet-action@v0.1.0
-      with:
-        # Use simple build command pointing to main app file
-        # ensure we use the android requirements
-        command: build apk --verbose --include-packages flet,Pillow,numpy,tflite_runtime
+      run: |
+        flet build apk --verbose --include-packages flet,Pillow,numpy,tflite_runtime
 
     - name: Upload APK
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: mango-guard-apk
         path: build/apk/**/*.apk
