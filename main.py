@@ -8,4 +8,4 @@ if __name__ == '__main__':
     
     # Run the app
     # export_asgi_app is not needed for APK, just standard ft.app
-    ft.app(target=main, upload_dir="uploads")
+    ft.app(target=main, upload_dir="uploads", secret_key="mangoguard_secret_key_123")

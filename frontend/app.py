@@ -693,4 +693,4 @@ def main(page: ft.Page):
 if __name__ == '__main__':
     # Ensure uploads dir exists relative to CWD
     os.makedirs("uploads", exist_ok=True)
-    ft.app(target=main, upload_dir="uploads")
+    ft.app(target=main, upload_dir="uploads", secret_key="mangoguard_secret_key_123")
