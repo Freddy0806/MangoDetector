@@ -44,7 +44,7 @@ jobs:
         mv requirements_android.txt requirements.txt
         
         # Build APK (using requirements.txt automatically)
-        flet build apk --verbose --module-name frontend.app
+        flet build apk --verbose .
         
         # Restore for cleanliness (optional)
         mv requirements.txt requirements_android.txt
