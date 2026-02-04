@@ -39,7 +39,16 @@ jobs:
 
     - name: Flet Build APK
       run: |
-        flet build apk --verbose --include-packages flet,Pillow,numpy,tflite_runtime
+        # Swap requirements to use the android optimized version
+        mv requirements.txt requirements_orig.txt
+        mv requirements_android.txt requirements.txt
+        
+        # Build APK (using requirements.txt automatically)
+        flet build apk --verbose .
+        
+        # Restore for cleanliness (optional)
+        mv requirements.txt requirements_android.txt
+        mv requirements_orig.txt requirements.txt
 
     - name: Upload APK
       uses: actions/upload-artifact@v4

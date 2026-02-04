@@ -85,9 +85,13 @@ class MangoApp:
         self.email = ft.TextField(label="Email", width=340, text_size=14)
         self.password = ft.TextField(label="Contraseña", password=True, can_reveal_password=True, width=340, text_size=14)
         self.username = ft.TextField(label="Usuario", width=340, text_size=14)
+        
+        # Absolute upload directory
+        self.upload_dir = os.path.join(PROJECT_ROOT, "uploads")
+        os.makedirs(self.upload_dir, exist_ok=True)
 
         # Flet FilePicker for cross-platform (web/mobile/desktop) client-side file selection
-        self.file_picker = ft.FilePicker(on_result=self.file_picker_result)
+        self.file_picker = ft.FilePicker(on_result=self.file_picker_result, on_upload=self.on_upload_progress)
         self.page.overlay.append(self.file_picker)
         self.file_picker_available = True
         logger.info("FilePicker enabled")
@@ -413,34 +417,54 @@ class MangoApp:
 
         Thread(target=tk_worker).start()
 
-    def file_picker_result(self, e: "ft.FilePickerUploadEvent"):
+    def on_upload_progress(self, e: ft.FilePickerUploadEvent):
+        if e.progress < 1.0:
+            return
+        # Upload complete
+        path = os.path.join(self.upload_dir, e.file_name)
+        self._upload_and_analyze(path, is_temp=False)
+
+    def file_picker_result(self, e: "ft.FilePickerResultEvent"):
         if not e.files:
             return
         picked = e.files[0]
-        # Prefer local path when available
+        
+        # Web/Mobile: We must upload the file to the server (local backend) to process it
+        # Try to use upload url
+        try:
+           self.picker_status.value = "Subiendo archivo..."
+           self.page.update()
+           
+           # Generate upload URL and upload
+           upload_url = self.page.get_upload_url(picked.name, 600)
+           self.file_picker.upload([
+               ft.FilePickerUploadFile(
+                   picked.name,
+                   upload_url=upload_url
+               )
+           ])
+           return
+        except Exception:
+           # Fallback for desktop where upload might not be needed/configured or fails
+           pass
+
+        # Prefer local path when available (Desktop)
         path = getattr(picked, 'path', None)
         if path:
             self._upload_and_analyze(path, is_temp=False)
             return
 
-        # Try to read bytes/content (web upload or camera capture)
+        # Fallback: try to read bytes/content directly if upload logic skipped
         data = None
-        # Common attribute names depending on platform
         for attr in ('bytes', 'content', 'data'):
             data = getattr(picked, attr, None)
             if data:
                 break
-        # Fallback: try to call read() if exists
-        if data is None and hasattr(picked, 'open'):
-            try:
-                f = picked.open('rb')
-                data = f.read()
-            except Exception:
-                data = None
+        
         if not data:
-            self.main_view.controls.append(ft.Text("No se pudo leer el archivo seleccionado", color=Colors.RED))
+            self.main_view.controls.append(ft.Text("Iniciando subida...", color=self.muted))
             self.page.update()
-            return
+            return # Wait for on_upload if upload was triggered, else fail
 
         # Save to temp file
         ext = os.path.splitext(getattr(picked, 'name', 'upload'))[1] or '.jpg'
@@ -449,10 +473,10 @@ class MangoApp:
             with os.fdopen(fd, 'wb') as out:
                 out.write(data)
         except Exception as ex:
-            self.main_view.controls.append(ft.Text(f"Error guardando archivo temporal: {ex}", color=Colors.RED))
+            self.main_view.controls.append(ft.Text(f"Error guardando archivo: {ex}", color=Colors.RED))
             self.page.update()
             return
-        # Pass temp path and mark as temporary for later cleanup
+        
         self._upload_and_analyze(tmp_path, is_temp=True)
 
     def update_history(self):
@@ -648,4 +672,6 @@ def main(page: ft.Page):
     MangoApp(page)
 
 if __name__ == '__main__':
-    ft.app(target=main)
+    # Ensure uploads dir exists relative to CWD
+    os.makedirs("uploads", exist_ok=True)
+    ft.app(target=main, upload_dir="uploads")
