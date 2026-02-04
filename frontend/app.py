@@ -439,14 +439,6 @@ class MangoApp:
             return
         picked = e.files[0]
         
-        # Web/Mobile: We must upload the file to the server (local backend) to process it
-        try:
-           # Safety: Use UUID for the upload filename to avoid issues with spaces/emojis in mobile filenames
-           ext = os.path.splitext(picked.name)[1]
-           if not ext:
-               ext = ".jpg"
-           safe_name = f"{uuid4().hex}{ext}"
-
         # Web/Mobile: Use upload mechanism
         try:
            self.picker_status.value = "Generando URL de subida..."
