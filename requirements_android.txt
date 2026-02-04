@@ -1,0 +1,7 @@
+flet==0.28.3
+Pillow
+numpy
+tflite-runtime; sys_platform == 'linux'
+# Note: tflite-runtime is platform specific. Flet generic build usually handles it via p4a recipes if specified.
+# For simplicity in GitHub Actions, we often rely on standard packages or specific wheels.
+# But for now, we list it. If standard build fails, we might need just 'flet' and allow flet to manage python.

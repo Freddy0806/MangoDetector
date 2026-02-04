@@ -1,0 +1,1 @@
+{'nivel_0': 0, 'nivel_1': 1, 'nivel_2': 2, 'nivel_3': 3, 'nivel_4': 4}

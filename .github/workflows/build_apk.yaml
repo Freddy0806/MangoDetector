@@ -1,0 +1,37 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements_android.txt
+
+    - name: Flet Build APK
+      uses: flet-dev/flet-action@v0.1.0
+      with:
+        # Use simple build command pointing to main app file
+        # ensure we use the android requirements
+        command: build apk --verbose --include-packages flet,Pillow,numpy,tflite_runtime
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: mango-guard-apk
+        path: build/apk/**/*.apk

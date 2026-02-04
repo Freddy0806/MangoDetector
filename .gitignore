@@ -1,0 +1,17 @@
+.env
+__pycache__/
+*.pyc
+uploads/*
+!uploads/.gitkeep
+auth.json
+.vscode/
+.venv/
+*.h5
+data/
+# Ignore virtual envs
+env/
+venv/
+# Ignore build artifacts
+build/
+dist/
+*.egg-info/
