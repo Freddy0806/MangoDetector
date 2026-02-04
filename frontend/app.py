@@ -86,13 +86,11 @@ class MangoApp:
         self.password = ft.TextField(label="Contraseña", password=True, can_reveal_password=True, width=340, text_size=14)
         self.username = ft.TextField(label="Usuario", width=340, text_size=14)
 
-        # NOTE: Some Flet runtimes print "Unknown control: FilePicker" when this control
-        # is instantiated or appended. To avoid that noisy error and to ensure a robust
-        # file-selection experience across platforms, we disable use of Flet's FilePicker
-        # and use a native dialog (tkinter) as a fallback for desktop environments.
-        self.file_picker = None
-        self.file_picker_available = False
-        logger.info("FilePicker disabled; using native dialog fallback")
+        # Flet FilePicker for cross-platform (web/mobile/desktop) client-side file selection
+        self.file_picker = ft.FilePicker(on_result=self.file_picker_result)
+        self.page.overlay.append(self.file_picker)
+        self.file_picker_available = True
+        logger.info("FilePicker enabled")
 
         # dynamic model selector (filled later)
         self.model_selector = ft.Dropdown()
@@ -368,28 +366,24 @@ class MangoApp:
         self.page.update()
 
     def open_file_picker(self, e=None):
-        """Open file picker with platform-friendly handling and UI feedback.
-
-        Prefer the native tkinter dialog for desktop environments to avoid runtime
-        incompatibilities with Flet's FilePicker control, which may not be available
-        or supported in some backends.
-        """
+        """Open client-side file picker (works on Web, Mobile, and Desktop)."""
         try:
-            self.picker_status.value = "Abriendo selector de archivos..."
+            self.picker_status.value = "Abriendo selector..."
             self.page.update()
         except Exception:
             pass
-
-        # Always prefer native desktop dialog for robustness
-        self.open_file_dialog_tk()
-
+        
+        if self.file_picker:
+            self.file_picker.pick_files(allow_multiple=False, file_type=ft.FilePickerFileType.IMAGE)
+        else:
+            # Fallback only if really needed (unlikely now)
+            self.open_file_dialog_tk()
+            
         try:
             self.picker_status.value = ""
             self.page.update()
         except Exception:
             pass
-
-        return
     def open_file_dialog_tk(self, e=None):
         """Fallback file selector using tkinter for desktop environments."""
         try:
