@@ -428,12 +428,9 @@ class MangoApp:
         self.picker_status.value = "Procesando..."
         self.page.update()
         
-        # We used the file_name from the event, which matches what we sent
+        # We used the file_name from the event (the one we generated/sent? No, Flet might use the original or generated)
+        # Actually Flet upload event returns the file_name relative to upload dir, usually matches safe_name if used in get_upload_url
         path = os.path.join(self.upload_dir, e.file_name)
-        
-        # Artificial small delay to ensure file close if needed
-        import time
-        time.sleep(0.2)
         
         self._upload_and_analyze(path, is_temp=False)
 
@@ -450,11 +447,20 @@ class MangoApp:
                ext = ".jpg"
            safe_name = f"{uuid4().hex}{ext}"
 
-           self.picker_status.value = "Iniciando subida..."
+        # Web/Mobile: Use upload mechanism
+        try:
+           self.picker_status.value = "Generando URL de subida..."
            self.page.update()
            
-           # Generate upload URL with SAFE name
+           # Use simpler upload logic without fancy UUID if it complicates things, 
+           # but UUID is safer. Keep UUID but log more status.
+           safe_name = f"{uuid4().hex}_{picked.name}" 
+           
            upload_url = self.page.get_upload_url(safe_name, 600)
+           
+           self.picker_status.value = "Iniciando transferencia..."
+           self.page.update()
+           
            self.file_picker.upload([
                ft.FilePickerUploadFile(
                    picked.name,
@@ -463,7 +469,9 @@ class MangoApp:
            ])
            return
         except Exception as ex:
-           logger.error("Upload failed fallback: %s", ex)
+           self.picker_status.value = f"Error subida: {ex}"
+           self.page.update()
+           logger.error("Upload failed: %s", ex)
            # Fallback for desktop where upload might not be needed/configured or fails
            pass
 
