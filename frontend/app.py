@@ -15,6 +15,7 @@ import sys
 import tempfile
 import contextlib
 from threading import Thread
+from uuid import uuid4
 
 logger = logging.getLogger(__name__)  # module logger
 
@@ -419,9 +420,21 @@ class MangoApp:
 
     def on_upload_progress(self, e: ft.FilePickerUploadEvent):
         if e.progress < 1.0:
+            self.picker_status.value = f"Subiendo... {int(e.progress * 100)}%"
+            self.page.update()
             return
+        
         # Upload complete
+        self.picker_status.value = "Procesando..."
+        self.page.update()
+        
+        # We used the file_name from the event, which matches what we sent
         path = os.path.join(self.upload_dir, e.file_name)
+        
+        # Artificial small delay to ensure file close if needed
+        import time
+        time.sleep(0.2)
+        
         self._upload_and_analyze(path, is_temp=False)
 
     def file_picker_result(self, e: "ft.FilePickerResultEvent"):
@@ -430,13 +443,18 @@ class MangoApp:
         picked = e.files[0]
         
         # Web/Mobile: We must upload the file to the server (local backend) to process it
-        # Try to use upload url
         try:
-           self.picker_status.value = "Subiendo archivo..."
+           # Safety: Use UUID for the upload filename to avoid issues with spaces/emojis in mobile filenames
+           ext = os.path.splitext(picked.name)[1]
+           if not ext:
+               ext = ".jpg"
+           safe_name = f"{uuid4().hex}{ext}"
+
+           self.picker_status.value = "Iniciando subida..."
            self.page.update()
            
-           # Generate upload URL and upload
-           upload_url = self.page.get_upload_url(picked.name, 600)
+           # Generate upload URL with SAFE name
+           upload_url = self.page.get_upload_url(safe_name, 600)
            self.file_picker.upload([
                ft.FilePickerUploadFile(
                    picked.name,
@@ -444,7 +462,8 @@ class MangoApp:
                )
            ])
            return
-        except Exception:
+        except Exception as ex:
+           logger.error("Upload failed fallback: %s", ex)
            # Fallback for desktop where upload might not be needed/configured or fails
            pass
 
